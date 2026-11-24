@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DeutschAktiv A2 - Luyện Từ Vựng & SRS Thông Minh</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+    }
+    .anti-peek-blur {
+      filter: blur(5px);
+      user-select: none;
+      transition: filter 0.2s ease, opacity 0.2s ease;
+      cursor: pointer;
+    }
+    .anti-peek-blur:hover,
+    .anti-peek-revealed {
+      filter: blur(0px);
+      user-select: text;
+    }
+    .meaning-blur {
+      filter: blur(6px);
+      user-select: none;
+      cursor: pointer;
+      transition: filter 0.2s ease;
+    }
+    .meaning-blur:hover,
+    .meaning-revealed {
+      filter: blur(0px);
+      user-select: text;
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #e2e8f0;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.95); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-pop {
+      animation: popIn 0.2s ease-out forwards;
+    }
+    @keyframes rowHighlight {
+      0% { background-color: #dcfce7; }
+      100% { background-color: transparent; }
+    }
+    .row-flash-success {
+      animation: rowHighlight 0.8s ease-out;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Top Navigation & Stats Header -->
+  <header class="bg-slate-900 text-white shadow-md sticky top-0 z-30">
+    <div class="max-w-[1440px] mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-teal-500 flex items-center justify-center font-bold text-slate-900 text-lg shadow-inner">
+          DE
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight flex items-center gap-2">
+            DeutschAktiv A2
+            <span class="text-xs font-medium bg-teal-500/20 text-teal-300 px-2 py-0.5 rounded-full border border-teal-500/30">
+              SRS + Dictation + Cloze
+            </span>
+          </h1>
+          <p class="text-xs text-slate-400">Tự chấm • Chống liếc đáp án • Gợi ý lịch ôn tập • Tự nhảy dòng</p>
+        </div>
+      </div>
+
+      <!-- Live Scoreboard -->
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3 bg-slate-800/90 px-3.5 py-2 rounded-xl border border-slate-700 text-xs sm:text-sm">
+        <div class="flex items-center gap-1.5">
+          <span class="text-slate-400">Hiển thị:</span>
+          <span id="stat-total" class="font-bold text-white">0</span>
+        </div>
+        <span class="text-slate-600">|</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-slate-400">Đúng:</span>
+          <span id="stat-correct" class="font-bold text-emerald-400">0</span>
+        </div>
+        <span class="text-slate-600">|</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-slate-400">Sai:</span>
+          <span id="stat-wrong" class="font-bold text-rose-400">0</span>
+        </div>
+        <span class="text-slate-600">|</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-slate-400">Cần ôn:</span>
+          <span id="stat-due" class="font-bold text-amber-400">0</span>
+        </div>
+        <span class="text-slate-600">|</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-slate-400">Đạt:</span>
+          <span id="stat-percent" class="font-bold text-teal-400">0%</span>
+        </div>
+      </div>
+
+      <!-- Primary Action Buttons -->
+      <div class="flex flex-wrap items-center gap-2">
+        <button onclick="openProgressModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition flex items-center gap-1.5 shadow-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+          Tiến trình & Lịch ôn
+        </button>
+        <button onclick="openAddModal()" class="bg-teal-600 hover:bg-teal-500 text-white font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition flex items-center gap-1.5 shadow-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+          Thêm từ
+        </button>
+        <button onclick="openBackupModal()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium px-3 py-2 rounded-lg text-xs sm:text-sm transition flex items-center gap-1.5 border border-slate-600" title="Sao lưu & Khôi phục dữ liệu">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+          Sao lưu
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Control Toolbar -->
+  <section class="bg-white border-b border-slate-200 shadow-sm">
+    <div class="max-w-[1440px] mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Left Filters -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200">
+          <label for="filter-lektion" class="text-xs font-semibold text-slate-600">Bài:</label>
+          <select id="filter-lektion" onchange="renderTable()" class="bg-transparent text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none cursor-pointer">
+            <option value="ALL">Tất cả bài</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200">
+          <label for="filter-pos" class="text-xs font-semibold text-slate-600">Loại:</label>
+          <select id="filter-pos" onchange="renderTable()" class="bg-transparent text-xs sm:text-sm font-medium text-slate-800 focus:outline-none cursor-pointer">
+            <option value="ALL">Tất cả</option>
+            <option value="N">Danh từ [N]</option>
+            <option value="V">Động từ [V]</option>
+            <option value="Adj">Tính/Trạng từ [Adj]</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200">
+          <label for="filter-status" class="text-xs font-semibold text-slate-600">Chế độ:</label>
+          <select id="filter-status" onchange="renderTable()" class="bg-transparent text-xs sm:text-sm font-medium text-slate-800 focus:outline-none cursor-pointer">
+            <option value="ALL">Tất cả từ</option>
+            <option value="DUE">🔥 Cần ôn hôm nay</option>
+            <option value="WEAK">⚠️ Hay sai / Cần ôn nhiều</option>
+            <option value="WRONG">Chỉ câu đang sai</option>
+            <option value="UNANSWERED">Chưa điền bài này</option>
+            <option value="MASTERED">🌟 Đã thuộc vững</option>
+          </select>
+        </div>
+
+        <div class="relative">
+          <input id="search-input" type="text" oninput="renderTable()" placeholder="Tìm nghĩa Việt..." class="pl-8 pr-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500 w-36 sm:w-44" />
+          <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </div>
+      </div>
+
+      <!-- Right Action Controls -->
+      <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+        <button id="btn-toggle-autoadvance" onclick="toggleAutoAdvance()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-semibold px-2.5 py-1.5 rounded-lg text-xs transition flex items-center gap-1">
+          ⏬ Tự nhảy dòng: BẬT
+        </button>
+
+        <button id="btn-toggle-cloze" onclick="toggleClozeMode()" class="bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-300 font-semibold px-2.5 py-1.5 rounded-lg text-xs transition flex items-center gap-1">
+          🙈 Che từ VD: BẬT
+        </button>
+
+        <button id="btn-toggle-dictation" onclick="toggleDictationMode()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-medium px-2.5 py-1.5 rounded-lg text-xs transition flex items-center gap-1">
+          🎧 Luyện nghe: TẮT
+        </button>
+
+        <button id="btn-toggle-umlaut" onclick="toggleUmlautBar()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-medium px-2.5 py-1.5 rounded-lg text-xs transition flex items-center gap-1">
+          äöüß
+        </button>
+
+        <button id="btn-speech-rate" onclick="toggleSpeechRate()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-medium px-2 py-1.5 rounded-lg text-xs transition flex items-center gap-1">
+          🔊 1.0x
+        </button>
+
+        <button id="btn-toggle-peek" onclick="toggleGlobalPeek()" class="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-medium px-2.5 py-1.5 rounded-lg text-xs transition flex items-center gap-1">
+          👁️ Hiện IPA/NP
+        </button>
+
+        <button onclick="shuffleWords()" class="bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-medium px-2.5 py-1.5 rounded-lg text-xs transition flex items-center gap-1">
+          🔀 Tráo từ
+        </button>
+
+        <button onclick="openResetModal()" class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-medium px-2.5 py-1.5 rounded-lg text-xs transition flex items-center gap-1">
+          🔄 Xóa làm lại
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Study Table Container -->
+  <main class="flex-1 max-w-[1440px] w-full mx-auto px-4 py-5 pb-24">
+    <div id="mode-banner" class="hidden mb-3 px-4 py-2.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs sm:text-sm flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-base">🎧</span>
+        <span><strong>Chế độ Luyện Nghe Chép Chính Tả đang bật:</strong> Nghĩa tiếng Việt đã được che mờ. Chạm vào ô nhập từ ở mỗi dòng để nghe phát âm tiếng Đức và gõ lại chính xác từ + mạo từ.</span>
+      </div>
+      <button onclick="toggleDictationMode()" class="text-xs font-semibold underline hover:text-indigo-950 ml-3 shrink-0">Tắt chế độ</button>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-800 text-slate-100 text-xs uppercase tracking-wider">
+              <th class="py-3.5 px-3 font-semibold w-12 text-center">#</th>
+              <th class="py-3.5 px-3 font-semibold w-24">Bài / Loại</th>
+              <th class="py-3.5 px-4 font-semibold min-w-[200px]">
+                Nghĩa tiếng Việt
+                <span id="header-dictation-badge" class="hidden ml-1 text-[10px] bg-indigo-500 text-white px-1.5 py-0.5 rounded normal-case">Đã che</span>
+              </th>
+              <th class="py-3.5 px-4 font-semibold min-w-[240px]">Điền từ tiếng Đức</th>
+              <th class="py-3.5 px-3 font-semibold w-36 text-center">Nghe & Chấm</th>
+              <th class="py-3.5 px-4 font-semibold min-w-[270px]">Ví dụ câu tiếng Đức</th>
+              <th class="py-3.5 px-3 font-semibold min-w-[145px]">Mức nhớ & Lịch ôn</th>
+              <th class="py-3.5 px-4 font-semibold min-w-[210px] bg-slate-900/60 border-l border-slate-700">
+                <div class="flex items-center justify-between">
+                  <span>Phiên âm & Ngữ pháp</span>
+                  <span class="text-[10px] font-normal text-slate-400 normal-case">(Che chống liếc)</span>
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="vocab-tbody" class="divide-y divide-slate-200 text-sm"></tbody>
+        </table>
+      </div>
+
+      <div id="empty-state" class="hidden py-12 px-4 text-center">
+        <p class="text-slate-500 font-medium text-base">Không tìm thấy từ vựng nào phù hợp với bộ lọc hiện tại.</p>
+        <button onclick="resetFilters()" class="mt-3 text-sm text-teal-600 font-semibold hover:underline">Đặt lại bộ lọc</button>
+      </div>
+    </div>
+
+    <div class="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 px-1">
+      <div>
+        💡 <strong>Mẹo gõ nhanh:</strong> Gõ đúng từ là hệ thống tự chấm và nhảy xuống dòng tiếp theo. Bấm <strong>Enter</strong> nếu muốn bỏ qua hoặc chuyển dòng thủ công.
+      </div>
+      <div>
+        Dữ liệu tự động lưu trên trình duyệt • Nhớ dùng nút <strong>Sao lưu</strong> khi chuyển thiết bị.
+      </div>
+    </div>
+  </main>
+
+  <!-- Compact Floating Umlaut Bar -->
+  <div id="umlaut-bar" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 text-white px-3 py-2 rounded-2xl shadow-xl border border-slate-700 flex items-center gap-1.5 backdrop-blur-sm animate-pop">
+    <span class="text-[11px] text-slate-400 font-medium pr-1 select-none">Umlaut:</span>
+    <button type="button" onmousedown="insertUmlaut(event, 'ä')" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-teal-600 font-semibold text-sm transition">ä</button>
+    <button type="button" onmousedown="insertUmlaut(event, 'ö')" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-teal-600 font-semibold text-sm transition">ö</button>
+    <button type="button" onmousedown="insertUmlaut(event, 'ü')" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-teal-600 font-semibold text-sm transition">ü</button>
+    <button type="button" onmousedown="insertUmlaut(event, 'ß')" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-teal-600 font-semibold text-sm transition">ß</button>
+    <span class="text-slate-600 mx-0.5">|</span>
+    <button type="button" onmousedown="insertUmlaut(event, 'Ä')" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-teal-600 font-semibold text-sm transition">Ä</button>
+    <button type="button" onmousedown="insertUmlaut(event, 'Ö')" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-teal-600 font-semibold text-sm transition">Ö</button>
+    <button type="button" onmousedown="insertUmlaut(event, 'Ü')" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-teal-600 font-semibold text-sm transition">Ü</button>
+    <button type="button" onclick="toggleUmlautBar()" class="ml-1.5 text-slate-400 hover:text-white px-1.5 text-xs">✕</button>
+  </div>
+
+  <!-- MODAL 1: Progress & SRS -->
+  <div id="progress-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-4xl w-full overflow-hidden animate-pop flex flex-col max-h-[90vh]">
+      <div class="bg-indigo-900 text-white px-6 py-4 flex items-center justify-between shrink-0">
+        <div>
+          <h2 class="text-base sm:text-lg font-bold">📊 Bảng Theo Dõi Tiến Trình & Lịch Ôn Tập (SRS)</h2>
+          <p class="text-xs text-indigo-200">Phân tích mức độ ghi nhớ của từng từ để ưu tiên ôn tập đúng thời điểm</p>
+        </div>
+        <button onclick="closeProgressModal()" class="text-indigo-200 hover:text-white text-2xl leading-none">&times;</button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-6">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-rose-50 border border-rose-200 rounded-xl p-3.5">
+            <div class="text-xs font-semibold text-rose-700">🔥 Cần ôn hôm nay</div>
+            <div id="srs-count-due" class="text-2xl font-bold text-rose-800 mt-1">0</div>
+            <div class="text-[11px] text-rose-600 mt-0.5">Từ vừa sai hoặc đến hạn ôn</div>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 rounded-xl p-3.5">
+            <div class="text-xs font-semibold text-amber-700">⏳ Đang ghi nhớ (1-3 ngày)</div>
+            <div id="srs-count-learning" class="text-2xl font-bold text-amber-800 mt-1">0</div>
+            <div class="text-[11px] text-amber-600 mt-0.5">Mới đúng 1–2 lần, cần củng cố</div>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5">
+            <div class="text-xs font-semibold text-emerald-700">🌟 Thuộc vững (7-14 ngày)</div>
+            <div id="srs-count-mastered" class="text-2xl font-bold text-emerald-800 mt-1">0</div>
+            <div class="text-[11px] text-emerald-600 mt-0.5">Không cần học lặp lại nhiều</div>
+          </div>
+          <div class="bg-slate-100 border border-slate-200 rounded-xl p-3.5">
+            <div class="text-xs font-semibold text-slate-600">🆕 Chưa luyện tập</div>
+            <div id="srs-count-new" class="text-2xl font-bold text-slate-800 mt-1">0</div>
+            <div class="text-[11px] text-slate-500 mt-0.5">Chưa có lịch sử làm bài</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div class="border border-rose-200 rounded-xl overflow-hidden flex flex-col">
+            <div class="bg-rose-50 px-4 py-2.5 border-b border-rose-200 flex items-center justify-between">
+              <h3 class="text-xs sm:text-sm font-bold text-rose-900">⚠️ Từ cần ôn nhiều (Ưu tiên cao)</h3>
+              <button onclick="practiceWeakWords()" class="text-xs bg-rose-600 hover:bg-rose-700 text-white font-semibold px-2.5 py-1 rounded-lg transition">
+                Luyện nhóm này ngay
+              </button>
+            </div>
+            <div id="weak-words-list" class="divide-y divide-slate-100 max-h-64 overflow-y-auto p-2 text-xs"></div>
+          </div>
+
+          <div class="border border-emerald-200 rounded-xl overflow-hidden flex flex-col">
+            <div class="bg-emerald-50 px-4 py-2.5 border-b border-emerald-200 flex items-center justify-between">
+              <h3 class="text-xs sm:text-sm font-bold text-emerald-900">🌟 Từ đã thuộc (Giãn lịch ôn)</h3>
+              <span class="text-[11px] text-emerald-700 font-medium">Ôn lại sau 7–14 ngày</span>
+            </div>
+            <div id="mastered-words-list" class="divide-y divide-slate-100 max-h-64 overflow-y-auto p-2 text-xs"></div>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-600">
+          <strong>Quy tắc gợi ý thời gian học lại:</strong>
+          Gõ sai <span class="text-rose-600 font-semibold">→ Ôn ngay hôm nay</span> •
+          Đúng 1 lần <span class="text-amber-700 font-semibold">→ Sau 1 ngày</span> •
+          Đúng 2 lần <span class="text-amber-700 font-semibold">→ Sau 3 ngày</span> •
+          Đúng 3 lần <span class="text-emerald-700 font-semibold">→ Sau 7 ngày</span> •
+          Đúng ≥4 lần <span class="text-emerald-700 font-semibold">→ Sau 14 ngày</span>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: Add New Words -->
+  <div id="add-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full overflow-hidden animate-pop">
+      <div class="bg-slate-800 text-white px-6 py-4 flex items-center justify-between">
+        <h2 class="text-base sm:text-lg font-bold">Thêm từ vựng hoặc Lektion mới</h2>
+        <button onclick="closeAddModal()" class="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+      </div>
+
+      <div class="flex border-b border-slate-200 bg-slate-50 px-6 pt-3 gap-4 text-sm font-semibold">
+        <button id="tab-single" onclick="switchModalTab('single')" class="pb-2.5 border-b-2 border-teal-600 text-teal-700">Thêm từng từ</button>
+        <button id="tab-bulk" onclick="switchModalTab('bulk')" class="pb-2.5 border-b-2 border-transparent text-slate-500 hover:text-slate-700">Dán hàng loạt (Từ AI / Excel)</button>
+      </div>
+
+      <form id="form-single" onsubmit="handleAddSingle(event)" class="p-6 space-y-4 text-sm">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Tên bài (Lektion) *</label>
+            <input id="in-lektion" type="text" value="Lektion 15" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Loại từ *</label>
+            <select id="in-pos" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500">
+              <option value="N">Danh từ [N]</option>
+              <option value="V">Động từ [V]</option>
+              <option value="Adj">Tính / Trạng từ [Adj]</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Nghĩa tiếng Việt *</label>
+            <input id="in-vi" type="text" placeholder="VD: cái bàn" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Từ tiếng Đức (kèm der/die/das) *</label>
+            <input id="in-de" type="text" placeholder="VD: der Tisch" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Ví dụ câu tiếng Đức *</label>
+          <input id="in-ex" type="text" placeholder="VD: Der Tisch steht im Wohnzimmer." required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500" />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Phiên âm IPA (Tùy chọn)</label>
+            <input id="in-ipa" type="text" placeholder="VD: /deːɐ̯ tɪʃ/" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Số nhiều / Perfekt (Tùy chọn)</label>
+            <input id="in-grammar" type="text" placeholder="VD: Pl: die Tische" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500" />
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeAddModal()" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50">Hủy</button>
+          <button type="submit" class="px-5 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-semibold shadow-sm">Lưu từ mới</button>
+        </div>
+      </form>
+
+      <div id="form-bulk" class="hidden p-6 space-y-4 text-sm">
+        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs text-slate-600 space-y-1">
+          <p class="font-semibold text-slate-800">Gửi ảnh trang từ vựng mới trong sách cho AI và dán kết quả vào đây.</p>
+          <p>Định dạng 7 cột phân cách bởi dấu <strong>Tab</strong> hoặc dấu <strong>|</strong>:</p>
+          <code class="block bg-white p-1.5 rounded border border-slate-200 text-[11px] text-teal-800 overflow-x-auto">
+            Lektion 15 | N | cái bàn | der Tisch | Der Tisch ist groß. | /deːɐ̯ tɪʃ/ | Pl: die Tische
+          </code>
+        </div>
+        <textarea id="bulk-textarea" rows="6" placeholder="Dán danh sách từ vựng của Lektion mới tại đây..." class="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500 font-mono text-xs"></textarea>
+        <div class="flex justify-end gap-2">
+          <button type="button" onclick="closeAddModal()" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50">Hủy</button>
+          <button type="button" onclick="handleBulkImport()" class="px-5 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-semibold shadow-sm">Nạp danh sách từ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: Backup & Restore -->
+  <div id="backup-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden animate-pop">
+      <div class="bg-slate-800 text-white px-6 py-4 flex items-center justify-between">
+        <h2 class="text-base font-bold">💾 Sao lưu, Khôi phục & Xuất dữ liệu</h2>
+        <button onclick="closeBackupModal()" class="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+      </div>
+      <div class="p-6 space-y-5 text-sm">
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5">
+          <h3 class="font-bold text-slate-800">1. Sao lưu & Đồng bộ giữa các thiết bị (.json)</h3>
+          <p class="text-xs text-slate-600">Tải toàn bộ từ vựng các bài đã thêm cùng lịch sử tiến trình SRS để chuyển sang thiết bị khác hoặc lưu dự phòng.</p>
+          <div class="flex flex-wrap gap-2 pt-1">
+            <button onclick="exportBackupJSON()" class="bg-teal-600 hover:bg-teal-500 text-white font-semibold px-3.5 py-2 rounded-lg text-xs transition flex items-center gap-1.5">
+              ⬇️ Tải file sao lưu (.json)
+            </button>
+            <label class="bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 font-semibold px-3.5 py-2 rounded-lg text-xs transition flex items-center gap-1.5 cursor-pointer">
+              ⬆️ Khôi phục từ file (.json)
+              <input type="file" accept=".json" onchange="importBackupJSON(event)" class="hidden" />
+            </label>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5">
+          <h3 class="font-bold text-slate-800">2. Xuất thẻ học sang AnkiDroid / Quizlet (.txt)</h3>
+          <p class="text-xs text-slate-600">Xuất toàn bộ danh sách từ hiện tại dưới dạng file văn bản phân cách bằng dấu Tab để nhập thẳng vào AnkiDroid.</p>
+          <button onclick="exportToTSV()" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-3.5 py-2 rounded-lg text-xs transition">
+            📥 Xuất file Anki (.txt)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: Reset Options -->
+  <div id="reset-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden animate-pop">
+      <div class="bg-slate-800 text-white px-5 py-3.5 flex items-center justify-between">
+        <h3 class="font-bold text-base">Chọn kiểu xóa làm lại</h3>
+        <button onclick="closeResetModal()" class="text-slate-400 hover:text-white text-xl leading-none">&times;</button>
+      </div>
+      <div class="p-5 space-y-3 text-sm">
+        <button onclick="executeReset(false)" class="w-full text-left p-3.5 rounded-xl border border-teal-200 bg-teal-50/60 hover:bg-teal-50 transition">
+          <div class="font-bold text-teal-900">1. Chỉ xóa ô gõ (Giữ nguyên lịch sử SRS)</div>
+          <div class="text-xs text-teal-700 mt-0.5">Làm trống các ô điền từ để luyện tập lại, nhưng vẫn giữ thống kê từ yếu/mạnh và lịch gợi ý ôn tập.</div>
+        </button>
+        <button onclick="executeReset(true)" class="w-full text-left p-3.5 rounded-xl border border-rose-200 bg-rose-50/60 hover:bg-rose-50 transition">
+          <div class="font-bold text-rose-900">2. Xóa cả ô gõ lẫn lịch sử SRS</div>
+          <div class="text-xs text-rose-700 mt-0.5">Đặt lại toàn bộ tiến trình ghi nhớ của các từ đang hiển thị về trạng thái mới ban đầu.</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DEFAULT_VOCAB = [
+      { id: 1, lektion: "Lektion 14", pos: "N", vi: "bưu điện", de: "die Post", clozeTarget: "Post", ex: "Ich gehe zur Post, um einen Brief zu schicken.", ipa: "/diː pɔst/", grammar: "Pl: (hiếm dùng số nhiều)" },
+      { id: 2, lektion: "Lektion 14", pos: "N", vi: "bưu kiện nhỏ", de: "das Päckchen", clozeTarget: "Päckchen", ex: "Meine Oma schickt mir ein kleines Päckchen zum Geburtstag.", ipa: "/das ˈpɛkçən/", grammar: "Pl: die Päckchen" },
+      { id: 3, lektion: "Lektion 14", pos: "N", vi: "bưu kiện", de: "das Paket", clozeTarget: "Paket", ex: "Das Paket ist sehr schwer und groß.", ipa: "/das paˈkeːt/", grammar: "Pl: die Pakete" },
+      { id: 4, lektion: "Lektion 14", pos: "N", vi: "người gửi", de: "der Absender", clozeTarget: "Absender", ex: "Bitte schreiben Sie den Absender oben links auf den Umschlag.", ipa: "/deːɐ̯ ˈapzɛndɐ/", grammar: "Pl: die Absender" },
+      { id: 5, lektion: "Lektion 14", pos: "N", vi: "địa chỉ", de: "die Adresse", clozeTarget: "Adresse", ex: "Wie ist deine neue Adresse in Berlin?", ipa: "/diː aˈdʁɛsə/", grammar: "Pl: die Adressen" },
+      { id: 6, lektion: "Lektion 14", pos: "N", vi: "người nhận", de: "der Empfänger", clozeTarget: "Empfängers", ex: "Der Name des Empfängers steht in der Mitte.", ipa: "/deːɐ̯ ɛmˈpfɛŋɐ/", grammar: "Pl: die Empfänger" },
+      { id: 7, lektion: "Lektion 14", pos: "N", vi: "chữ ký", de: "die Unterschrift", clozeTarget: "Unterschrift", ex: "Hier unten fehlt noch Ihre Unterschrift.", ipa: "/diː ˈʊntɐʃʁɪft/", grammar: "Pl: die Unterschriften" },
+      { id: 8, lektion: "Lektion 14", pos: "N", vi: "bao thư, phong thư", de: "der Briefumschlag", clozeTarget: "Briefumschlag", ex: "Ich stecke den Brief in einen weißen Briefumschlag.", ipa: "/deːɐ̯ ˈbʁiːfˌʔʊmʃlaːk/", grammar: "Pl: die Briefumschläge" },
+      { id: 9, lektion: "Lektion 14", pos: "N", vi: "quầy", de: "der Schalter", clozeTarget: "Schalter", ex: "Sie können Briefmarken am Schalter kaufen.", ipa: "/deːɐ̯ ˈʃaltɐ/", grammar: "Pl: die Schalter" },
+      { id: 10, lektion: "Lektion 14", pos: "N", vi: "hòm thư, hộp thư", de: "der Briefkasten", clozeTarget: "Briefkasten", ex: "Ich werfe die Postkarte in den gelben Briefkasten.", ipa: "/deːɐ̯ ˈbʁiːfˌkastn̩/", grammar: "Pl: die Briefkästen" },
+      { id: 11, lektion: "Lektion 14", pos: "N", vi: "bưu thiếp", de: "die Postkarte", clozeTarget: "Postkarte", ex: "Aus dem Urlaub schreibe ich meinen Freunden immer eine Postkarte.", ipa: "/diː ˈpɔstˌkaʁtə/", grammar: "Pl: die Postkarten" },
+      { id: 12, lektion: "Lektion 14", pos: "N", vi: "bức thư", de: "der Brief", clozeTarget: "Brief", ex: "Gestern habe ich einen langen Brief von meinem Bruder bekommen.", ipa: "/deːɐ̯ bʁiːf/", grammar: "Pl: die Briefe" },
+      { id: 13, lektion: "Lektion 14", pos: "N", vi: "thùng carton, thùng giấy cứng", de: "der Karton", clozeTarget: "Karton", ex: "Wir packen alle Bücher in einen großen Karton.", ipa: "/deːɐ̯ kaʁˈtɔŋ/", grammar: "Pl: die Kartons / Kartone" },
+      { id: 14, lektion: "Lektion 14", pos: "N", vi: "đêm Giáng Sinh", de: "der Heiligabend", clozeTarget: "Heiligabend", ex: "Am Heiligabend feiert die ganze Familie zusammen.", ipa: "/deːɐ̯ ˈhaɪ̯lɪçˌʔaːbn̩t/", grammar: "Pl: die Heiligabende" },
+      { id: 15, lektion: "Lektion 14", pos: "N", vi: "hướng dẫn sử dụng", de: "die Gebrauchsanweisung", clozeTarget: "Gebrauchsanweisung", ex: "Vor der Benutzung sollten Sie die Gebrauchsanweisung lesen.", ipa: "/diː ɡəˈbʁaʊ̯xsˌʔanvaɪ̯zʊŋ/", grammar: "Pl: die Gebrauchsanweisungen" },
+      { id: 16, lektion: "Lektion 14", pos: "N", vi: "tiếng động", de: "das Geräusch", clozeTarget: "Geräusch", ex: "Hörst du dieses komische Geräusch aus der Küche?", ipa: "/das ɡəˈʁɔɪ̯ʃ/", grammar: "Pl: die Geräusche" },
+      { id: 17, lektion: "Lektion 14", pos: "N", vi: "bước", de: "der Schritt", clozeTarget: "Schritt", ex: "Erklären Sie mir bitte den Prozess Schritt für Schritt.", ipa: "/deːɐ̯ ʃʁɪt/", grammar: "Pl: die Schritte" },
+      { id: 18, lektion: "Lektion 14", pos: "N", vi: "nhãn hiệu", de: "das Etikett", clozeTarget: "Etikett", ex: "Der Preis steht auf dem Etikett.", ipa: "/das etiˈkɛt/", grammar: "Pl: die Etiketten" },
+      { id: 19, lektion: "Lektion 14", pos: "N", vi: "giới tính", de: "das Geschlecht", clozeTarget: "Geschlecht", ex: "Auf dem Formular muss man sein Geschlecht ankreuzen.", ipa: "/das ɡəˈʃlɛçt/", grammar: "Pl: die Geschlechter" },
+      { id: 20, lektion: "Lektion 14", pos: "N", vi: "thú bông", de: "das Stofftier", clozeTarget: "Stofftier", ex: "Das kleine Kind schläft immer mit seinem Stofftier.", ipa: "/das ˈʃtɔfˌtiːɐ̯/", grammar: "Pl: die Stofftiere" },
+      { id: 21, lektion: "Lektion 14", pos: "N", vi: "dụng cụ học tập", de: "die Schulsache", clozeTarget: "Schulsachen", ex: "Die Kinder legen ihre Schulsachen auf den Tisch.", ipa: "/diː ˈʃuːlˌzaxə/", grammar: "Pl: die Schulsachen" },
+      { id: 22, lektion: "Lektion 14", pos: "N", vi: "đồ ngọt", de: "die Süßigkeit", clozeTarget: "Süßigkeiten", ex: "Kinder essen sehr gern Süßigkeiten.", ipa: "/diː ˈzyːsɪçkaɪ̯t/", grammar: "Pl: die Süßigkeiten" },
+      { id: 23, lektion: "Lektion 14", pos: "N", vi: "dây cao su, dây thun", de: "das Gummiband", clozeTarget: "Gummiband", ex: "Ich binde die Stifte mit einem Gummiband zusammen.", ipa: "/das ˈɡʊmiˌbant/", grammar: "Pl: die Gummibänder" },
+      { id: 24, lektion: "Lektion 14", pos: "N", vi: "phiếu giảm giá", de: "der Gutschein", clozeTarget: "Gutschein", ex: "Zum Geburtstag habe ich einen Gutschein für ein Buchgeschäft bekommen.", ipa: "/deːɐ̯ ˈɡuːtˌʃaɪ̯n/", grammar: "Pl: die Gutscheine" },
+      { id: 25, lektion: "Lektion 14", pos: "V", vi: "ký tên", de: "unterschreiben", clozeTarget: "unterschreiben", ex: "Können Sie bitte dieses Dokument hier unterschreiben?", ipa: "/ˌʊntɐˈʃʁaɪ̯bn̩/", grammar: "Perfekt: hat unterschrieben" },
+      { id: 26, lektion: "Lektion 14", pos: "V", vi: "gói đồ", de: "packen", clozeTarget: "packen", ex: "Ich muss heute Abend noch meinen Koffer packen.", ipa: "/ˈpakn̩/", grammar: "Perfekt: hat gepackt" },
+      { id: 27, lektion: "Lektion 14", pos: "V", vi: "thiếu", de: "fehlen", clozeTarget: "fehlt", ex: "Auf dem Brief fehlt leider die Briefmarke.", ipa: "/ˈfeːlən/", grammar: "Perfekt: hat gefehlt" },
+      { id: 28, lektion: "Lektion 14", pos: "V", vi: "gửi cái gì (số lượng lớn)", de: "verschicken", clozeTarget: "verschickt", ex: "Die Firma verschickt täglich hunderte Pakete.", ipa: "/fɛɐ̯ˈʃɪkn̩/", grammar: "Perfekt: hat verschickt" },
+      { id: 29, lektion: "Lektion 14", pos: "V", vi: "gửi đi", de: "abschicken", clozeTarget: "abgeschickt", ex: "Hast du die E-Mail schon abgeschickt?", ipa: "/ˈapˌʃɪkn̩/", grammar: "Perfekt: hat abgeschickt" },
+      { id: 30, lektion: "Lektion 14", pos: "V", vi: "phân phát, phân chia", de: "verteilen", clozeTarget: "verteilt", ex: "Der Lehrer verteilt die Arbeitsblätter an die Schüler.", ipa: "/fɛɐ̯ˈtaɪ̯lən/", grammar: "Perfekt: hat verteilt" },
+      { id: 31, lektion: "Lektion 14", pos: "V", vi: "dán cái gì (lên bề mặt)", de: "bekleben", clozeTarget: "bekleben", ex: "Die Kinder bekleben das Heft mit bunten Stickern.", ipa: "/bəˈkleːbn̩/", grammar: "Perfekt: hat beklebt" },
+      { id: 32, lektion: "Lektion 14", pos: "V", vi: "dán cái gì lên cái gì", de: "aufkleben", clozeTarget: "aufkleben", ex: "Man muss die Briefmarke oben rechts auf den Brief aufkleben.", ipa: "/ˈaʊ̯fˌkleːbn̩/", grammar: "Perfekt: hat aufgeklebt" },
+      { id: 33, lektion: "Lektion 14", pos: "V", vi: "đánh dấu (chữ X)", de: "ankreuzen", clozeTarget: "ankreuzen", ex: "Bitte kreuzen Sie die richtige Antwort an.", ipa: "/ˈanˌkʁɔɪ̯tsn̩/", grammar: "Perfekt: hat angekreuzt" },
+      { id: 34, lektion: "Lektion 14", pos: "V", vi: "đóng chặt, khóa chặt bằng cái gì", de: "verschließen", clozeTarget: "verschließen", ex: "Bitte verschließen Sie den Umschlag gut.", ipa: "/fɛɐ̯ˈʃliːsn̩/", grammar: "Perfekt: hat verschlossen" },
+      { id: 35, lektion: "Lektion 14", pos: "V", vi: "vui mừng về điều gì (hiện tại/quá khứ)", de: "sich freuen über", clozeTarget: "freue mich sehr über", ex: "Ich freue mich sehr über dein schönes Geschenk.", ipa: "/zɪç ˈfʁɔɪ̯ən ˈyːbɐ/", grammar: "+ Akkusativ" },
+      { id: 36, lektion: "Lektion 14", pos: "V", vi: "mong chờ điều gì (trong tương lai)", de: "sich freuen auf", clozeTarget: "freuen uns schon auf", ex: "Wir freuen uns schon auf die Sommerferien.", ipa: "/zɪç ˈfʁɔɪ̯ən aʊ̯f/", grammar: "+ Akkusativ" },
+      { id: 37, lektion: "Lektion 14", pos: "Adj", vi: "nghèo", de: "arm", clozeTarget: "arm", ex: "Die Familie ist zwar arm, aber sehr glücklich.", ipa: "/aʁm/", grammar: "So sánh: ärmer, am ärmsten" },
+      { id: 38, lektion: "Lektion 14", pos: "Adj", vi: "thuộc về nước Rumani", de: "rumänisch", clozeTarget: "rumänische", ex: "Das ist eine traditionelle rumänische Spezialität.", ipa: "/ʁuˈmɛːnɪʃ/", grammar: "VD: rumänische Kinder" },
+      { id: 39, lektion: "Lektion 14", pos: "Adj", vi: "trước tiên, đầu tiên", de: "zuerst", clozeTarget: "Zuerst", ex: "Zuerst machen wir die Hausaufgaben, dann spielen wir.", ipa: "/tsuˈeːɐ̯st/", grammar: "Trạng từ chỉ thời gian" },
+      { id: 40, lektion: "Lektion 14", pos: "Adj", vi: "cuối cùng", de: "schließlich", clozeTarget: "schließlich", ex: "Nach einer langen Reise kamen wir schließlich in München an.", ipa: "/ˈʃliːslɪç/", grammar: "Đồng nghĩa: zuletzt" },
+      { id: 41, lektion: "Lektion 14", pos: "N", vi: "kem bôi", de: "die Creme", clozeTarget: "Creme", ex: "Im Winter brauche ich eine gute Creme für meine Hände.", ipa: "/diː kʁeːm/", grammar: "Pl: die Cremes" },
+      { id: 42, lektion: "Lektion 14", pos: "N", vi: "mặt", de: "das Gesicht", clozeTarget: "Gesicht", ex: "Sie wäscht sich morgens das Gesicht mit kaltem Wasser.", ipa: "/das ɡəˈzɪçt/", grammar: "Pl: die Gesichter" },
+      { id: 43, lektion: "Lektion 14", pos: "N", vi: "cậu bé", de: "der Junge", clozeTarget: "Junge", ex: "Der kleine Junge spielt im Park Fußball.", ipa: "/deːɐ̯ ˈjʊŋə/", grammar: "Pl: die Jungen" },
+      { id: 44, lektion: "Lektion 14", pos: "N", vi: "bé gái", de: "das Mädchen", clozeTarget: "Mädchen", ex: "Das Mädchen liest ein interessantes Buch.", ipa: "/das ˈmɛːtçən/", grammar: "Pl: die Mädchen" },
+      { id: 45, lektion: "Lektion 14", pos: "N", vi: "dự án", de: "das Projekt", clozeTarget: "Projekt", ex: "Wir arbeiten zusammen an einem neuen Projekt.", ipa: "/das pʁoˈjɛkt/", grammar: "Pl: die Projekte" },
+      { id: 46, lektion: "Lektion 14", pos: "N", vi: "bảng", de: "die Tafel", clozeTarget: "Tafel", ex: "Der Lehrer schreibt die neuen Wörter an die Tafel.", ipa: "/diː ˈtaːfl̩/", grammar: "Pl: die Tafeln" },
+      { id: 47, lektion: "Lektion 14", pos: "N", vi: "centimet (cm)", de: "der Zentimeter", clozeTarget: "Zentimeter", ex: "Der Tisch ist achtzig Zentimeter hoch.", ipa: "/deːɐ̯ ˈtsɛntiˌmeːtɐ/", grammar: "Pl: die Zentimeter" },
+      { id: 48, lektion: "Lektion 14", pos: "N", vi: "mã vùng bưu điện (PLZ)", de: "die Postleitzahl", clozeTarget: "Postleitzahl", ex: "Vergessen Sie nicht, die Postleitzahl vor die Stadt zu schreiben.", ipa: "/diː ˈpɔstlaɪ̯tˌtsaːl/", grammar: "Pl: die Postleitzahlen" },
+      { id: 49, lektion: "Lektion 14", pos: "N", vi: "vé số, xổ số", de: "der Lottoschein", clozeTarget: "Lottoschein", ex: "Mein Vater kauft jede Woche einen Lottoschein.", ipa: "/deːɐ̯ ˈlɔtoˌʃaɪ̯n/", grammar: "Pl: die Lottoscheine" },
+      { id: 50, lektion: "Lektion 14", pos: "N", vi: "đồ mở hộp", de: "der Dosenöffner", clozeTarget: "Dosenöffner", ex: "Wo ist der Dosenöffner? Ich möchte die Suppe aufmachen.", ipa: "/deːɐ̯ ˈdoːzn̩ˌʔœfnɐ/", grammar: "Pl: die Dosenöffner" },
+      { id: 51, lektion: "Lektion 14", pos: "N", vi: "phiếu nhận bưu phẩm", de: "der Rückschein", clozeTarget: "Rückschein", ex: "Der Briefträger hat einen Rückschein in den Briefkasten gelegt.", ipa: "/deːɐ̯ ˈʁʏkˌʃaɪ̯n/", grammar: "Pl: die Rückscheine" },
+      { id: 52, lektion: "Lektion 14", pos: "N", vi: "máy tính xách tay", de: "das Notebook", clozeTarget: "Notebook", ex: "Ich nehme mein Notebook mit in die Universität.", ipa: "/das ˈnoʊ̯tbʊk/", grammar: "Pl: die Notebooks (= der Laptop)" },
+      { id: 53, lektion: "Lektion 14", pos: "V", vi: "gói lại, đóng gói lại", de: "einpacken", clozeTarget: "einpacken", ex: "Können Sie das Buch bitte als Geschenk einpacken?", ipa: "/ˈaɪ̯nˌpakn̩/", grammar: "Perfekt: hat eingepackt" },
+      { id: 54, lektion: "Lektion 14", pos: "V", vi: "vận chuyển, chuyên chở", de: "transportieren", clozeTarget: "transportieren", ex: "Große Lkws transportieren die Waren durch das ganze Land.", ipa: "/tʁanspɔʁˈtiːʁən/", grammar: "Perfekt: hat transportiert" },
+      { id: 55, lektion: "Lektion 14", pos: "V", vi: "sử dụng", de: "benutzen", clozeTarget: "benutzen", ex: "Darf ich kurz dein Handy benutzen?", ipa: "/bəˈnʊtsn̩/", grammar: "Perfekt: hat benutzt (= verwenden)" },
+      { id: 56, lektion: "Lektion 14", pos: "V", vi: "nghĩ về", de: "denken an", clozeTarget: "denke oft an", ex: "Ich denke oft an unsere schöne Zeit in Deutschland.", ipa: "/ˈdɛŋkn̩ an/", grammar: "+ Akk | Perfekt: hat an gedacht" },
+      { id: 57, lektion: "Lektion 14", pos: "V", vi: "bổ sung", de: "ergänzen", clozeTarget: "ergänzen", ex: "Bitte ergänzen Sie die fehlenden Wörter im Text.", ipa: "/ɛɐ̯ˈɡɛntsn̩/", grammar: "Perfekt: hat ergänzt" },
+      { id: 58, lektion: "Lektion 14", pos: "V", vi: "dùng, sử dụng", de: "gebrauchen", clozeTarget: "gebrauchen", ex: "Dieses alte Wörterbuch kann man noch gut gebrauchen.", ipa: "/ɡəˈbʁaʊ̯xn̩/", grammar: "Perfekt: hat gebraucht" },
+      { id: 59, lektion: "Lektion 14", pos: "Adj", vi: "phức tạp", de: "kompliziert", clozeTarget: "kompliziert", ex: "Die deutsche Grammatik ist manchmal ein bisschen kompliziert.", ipa: "/kɔmpliˈtsiːɐ̯t/", grammar: "Tính từ" },
+      { id: 60, lektion: "Lektion 14", pos: "Adj", vi: "khác nhau", de: "verschieden", clozeTarget: "verschiedenen", ex: "In unserem Kurs gibt es Studenten aus verschiedenen Ländern.", ipa: "/fɛɐ̯ˈʃiːdn̩/", grammar: "Đồng nghĩa: unterschiedlich" }
+    ];
+
+    const STORAGE_KEY_VOCAB = "deutsch_aktiv_vocab_v2";
+    const STORAGE_KEY_ANSWERS = "deutsch_aktiv_answers_v2";
+    const STORAGE_KEY_SRS = "deutsch_aktiv_srs_v1";
+
+    let vocabList = [];
+    let userAnswers = {};
+    let srsData = {};
+    let speechRate = 1.0;
+    let globalPeekRevealed = false;
+    let clozeMode = true;
+    let dictationMode = false;
+    let autoAdvanceMode = true;
+    let lastFocusedInput = null;
+    let revealedRows = {};
+    let revealedMeanings = {};
+
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const SRS_INTERVALS_DAYS = [0, 1, 3, 7, 14];
+
+    function initApp() {
+      const savedVocab = localStorage.getItem(STORAGE_KEY_VOCAB);
+      const savedAnswers = localStorage.getItem(STORAGE_KEY_ANSWERS);
+      const savedSrs = localStorage.getItem(STORAGE_KEY_SRS);
+
+      if (savedVocab) {
+        try { vocabList = JSON.parse(savedVocab); } catch (e) { vocabList = [...DEFAULT_VOCAB]; }
+      } else {
+        vocabList = [...DEFAULT_VOCAB];
+        shuffleArray(vocabList);
+        saveVocab();
+      }
+
+      if (savedAnswers) {
+        try { userAnswers = JSON.parse(savedAnswers); } catch (e) { userAnswers = {}; }
+      }
+
+      if (savedSrs) {
+        try { srsData = JSON.parse(savedSrs); } catch (e) { srsData = {}; }
+      }
+
+      populateLektionDropdown();
+      renderTable();
+    }
+
+    function saveVocab() { localStorage.setItem(STORAGE_KEY_VOCAB, JSON.stringify(vocabList)); }
+    function saveAnswers() { localStorage.setItem(STORAGE_KEY_ANSWERS, JSON.stringify(userAnswers)); }
+    function saveSrs() { localStorage.setItem(STORAGE_KEY_SRS, JSON.stringify(srsData)); }
+
+    function getWordSrs(id) {
+      return srsData[id] || { streak: 0, wrongCount: 0, correctCount: 0, lastReviewed: null, nextReview: null };
+    }
+
+    function recordAttempt(id, isCorrect) {
+      const now = Date.now();
+      const record = getWordSrs(id);
+      if (record.lastReviewed && (now - record.lastReviewed < 4000) && record.lastResult === isCorrect) return;
+
+      record.lastReviewed = now;
+      record.lastResult = isCorrect;
+
+      if (isCorrect) {
+        record.correctCount += 1;
+        record.streak += 1;
+        const intervalIdx = Math.min(record.streak, SRS_INTERVALS_DAYS.length - 1);
+        record.nextReview = now + SRS_INTERVALS_DAYS[intervalIdx] * DAY_MS;
+      } else {
+        record.wrongCount += 1;
+        record.streak = 0;
+        record.nextReview = now;
+      }
+
+      srsData[id] = record;
+      saveSrs();
+    }
+
+    function getSrsStatusInfo(id) {
+      const rec = getWordSrs(id);
+      const now = Date.now();
+
+      if (!rec.lastReviewed) {
+        return { category: "NEW", badgeText: "Mới", badgeClass: "bg-slate-100 text-slate-600 border-slate-200", scheduleText: "Chưa học" };
+      }
+      if (rec.streak === 0) {
+        return { category: "DUE", badgeText: `Hay nhầm (Sai ${rec.wrongCount})`, badgeClass: "bg-rose-100 text-rose-800 border-rose-200", scheduleText: "🔥 Ôn lại ngay hôm nay" };
+      }
+
+      const isDue = rec.nextReview && now >= rec.nextReview;
+      const daysLeft = rec.nextReview ? Math.max(1, Math.ceil((rec.nextReview - now) / DAY_MS)) : 1;
+
+      if (isDue) {
+        return { category: "DUE", badgeText: `Đến hạn ôn (Chuỗi ${rec.streak})`, badgeClass: "bg-amber-100 text-amber-800 border-amber-300", scheduleText: "⏰ Cần ôn lại hôm nay" };
+      }
+      if (rec.streak >= 3) {
+        return { category: "MASTERED", badgeText: `Thuộc vững (${rec.streak}x)`, badgeClass: "bg-emerald-100 text-emerald-800 border-emerald-200", scheduleText: `🌟 Ôn lại sau ${daysLeft} ngày` };
+      }
+      return { category: "LEARNING", badgeText: `Đang nhớ (${rec.streak}x)`, badgeClass: "bg-sky-100 text-sky-800 border-sky-200", scheduleText: `⏳ Ôn lại sau ${daysLeft} ngày` };
+    }
+
+    function isWordWeak(id) {
+      const rec = getWordSrs(id);
+      return rec.wrongCount > 0 && rec.streak < 2;
+    }
+
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+
+    function populateLektionDropdown() {
+      const select = document.getElementById("filter-lektion");
+      const currentVal = select.value;
+      const lektions = [...new Set(vocabList.map(item => item.lektion))];
+      select.innerHTML = `<option value="ALL">Tất cả bài (${vocabList.length})</option>`;
+      lektions.forEach(lek => {
+        const count = vocabList.filter(i => i.lektion === lek).length;
+        const opt = document.createElement("option");
+        opt.value = lek;
+        opt.textContent = `${lek} (${count})`;
+        select.appendChild(opt);
+      });
+      if ([...select.options].some(o => o.value === currentVal)) select.value = currentVal;
+    }
+
+    function normalizeGerman(str) {
+      return str ? str.trim().replace(/\s+/g, " ").toLowerCase() : "";
+    }
+
+    function checkAnswer(item, userInput) {
+      const cleanInput = normalizeGerman(userInput);
+      if (!cleanInput) return "EMPTY";
+      return cleanInput === normalizeGerman(item.de) ? "CORRECT" : "WRONG";
+    }
+
+    function getFilteredVocab() {
+      const lekFilter = document.getElementById("filter-lektion").value;
+      const posFilter = document.getElementById("filter-pos").value;
+      const statusFilter = document.getElementById("filter-status").value;
+      const query = document.getElementById("search-input").value.trim().toLowerCase();
+
+      return vocabList.filter(item => {
+        if (lekFilter !== "ALL" && item.lektion !== lekFilter) return false;
+        if (posFilter !== "ALL" && item.pos !== posFilter) return false;
+
+        const status = checkAnswer(item, userAnswers[item.id] || "");
+        const srsInfo = getSrsStatusInfo(item.id);
+
+        if (statusFilter === "DUE" && srsInfo.category !== "DUE") return false;
+        if (statusFilter === "WEAK" && !isWordWeak(item.id)) return false;
+        if (statusFilter === "WRONG" && status !== "WRONG") return false;
+        if (statusFilter === "UNANSWERED" && status !== "EMPTY") return false;
+        if (statusFilter === "MASTERED" && srsInfo.category !== "MASTERED") return false;
+
+        if (query) {
+          const matchVi = item.vi.toLowerCase().includes(query);
+          const matchDe = status === "CORRECT" && item.de.toLowerCase().includes(query);
+          if (!matchVi && !matchDe) return false;
+        }
+        return true;
+      });
+    }
+
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function formatExampleSentence(item, isSolved) {
+      const escapedEx = escapeHtml(item.ex);
+      if (!clozeMode || isSolved) {
+        const target = item.clozeTarget || item.de.replace(/^(der|die|das|sich)\s+/i, "").trim();
+        if (target && isSolved) {
+          try {
+            const regex = new RegExp(`(${escapeRegExp(target)})`, "gi");
+            return escapedEx.replace(regex, `<span class="font-bold text-teal-700 bg-teal-50 px-1 rounded">$1</span>`);
+          } catch (e) { return escapedEx; }
+        }
+        return escapedEx;
+      }
+
+      const rawTarget = item.clozeTarget || item.de.replace(/^(der|die|das|sich)\s+/i, "").trim();
+      if (!rawTarget) return escapedEx;
+
+      try {
+        const regex = new RegExp(`\\b${escapeRegExp(rawTarget)}\\b`, "gi");
+        if (regex.test(item.ex)) {
+          return escapeHtml(item.ex).replace(
+            new RegExp(`\\b${escapeRegExp(rawTarget)}\\b`, "gi"),
+            `<span class="inline-block px-2 py-0.2 bg-amber-100 text-amber-800 border border-amber-300 rounded font-mono text-xs font-semibold tracking-wider select-none">[ _____ ]</span>`
+          );
+        }
+      } catch (e) {}
+      return escapedEx;
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById("vocab-tbody");
+      const emptyState = document.getElementById("empty-state");
+      const filtered = getFilteredVocab();
+
+      tbody.innerHTML = "";
+      emptyState.classList.toggle("hidden", filtered.length > 0);
+
+      filtered.forEach((item, index) => {
+        const currentVal = userAnswers[item.id] || "";
+        const status = checkAnswer(item, currentVal);
+        const isSolved = status === "CORRECT";
+        const isPeekOpen = globalPeekRevealed || revealedRows[item.id];
+        const isMeaningOpen = !dictationMode || isSolved || revealedMeanings[item.id];
+        const srsInfo = getSrsStatusInfo(item.id);
+
+        let posBadgeClass = "bg-sky-100 text-sky-800 border-sky-200";
+        if (item.pos === "V") posBadgeClass = "bg-purple-100 text-purple-800 border-purple-200";
+        if (item.pos === "Adj") posBadgeClass = "bg-amber-100 text-amber-800 border-amber-200";
+
+        let inputBorderClass = "border-slate-300 bg-amber-50/40 focus:border-teal-500 focus:bg-white";
+        let statusBadge = `<span class="text-xs text-slate-400">Chờ điền</span>`;
+
+        if (status === "CORRECT") {
+          inputBorderClass = "border-emerald-500 bg-emerald-50/60 text-emerald-900 font-semibold";
+          statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">Đúng ✓</span>`;
+        } else if (status === "WRONG") {
+          inputBorderClass = "border-rose-400 bg-rose-50/60 text-rose-900";
+          statusBadge = `
+            <div class="flex flex-col items-center gap-1">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300">Sai ✗</span>
+              <button onclick="revealHint(${item.id})" class="text-[11px] text-rose-600 hover:underline font-medium">Xem đáp án</button>
+            </div>
+          `;
+        }
+
+        const formattedExample = formatExampleSentence(item, isSolved);
+        const tr = document.createElement("tr");
+        tr.id = `row-${item.id}`;
+        tr.className = "hover:bg-slate-50/90 transition-colors group";
+        tr.innerHTML = `
+          <td class="py-3 px-3 text-center text-xs font-medium text-slate-400">${index + 1}</td>
+          <td class="py-3 px-3">
+            <div class="text-[11px] font-medium text-slate-500">${escapeHtml(item.lektion)}</div>
+            <span class="inline-block mt-0.5 px-1.5 py-0.2 text-[11px] font-bold rounded border ${posBadgeClass}">[${escapeHtml(item.pos)}]</span>
+          </td>
+          <td class="py-3 px-4 font-medium text-slate-800">
+            <div onclick="toggleSingleMeaning(${item.id})" class="${isMeaningOpen ? 'meaning-revealed' : 'meaning-blur'}">${escapeHtml(item.vi)}</div>
+            ${!isMeaningOpen ? `<button onclick="toggleSingleMeaning(${item.id})" class="mt-1 text-[11px] text-indigo-600 hover:underline font-medium">Hiện nghĩa</button>` : ''}
+          </td>
+          <td class="py-3 px-4">
+            <input
+              id="input-${item.id}"
+              type="text"
+              value="${escapeHtml(currentVal)}"
+              onfocus="handleInputFocus(this, ${item.id})"
+              oninput="handleInput(${item.id}, this.value)"
+              onkeydown="handleKeyDown(event, ${item.id})"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
+              placeholder="${dictationMode ? 'Nghe âm thanh và gõ lại...' : (item.pos === 'N' ? 'der/die/das + Danh từ...' : 'Nhập từ tiếng Đức...')}"
+              class="w-full px-3 py-1.5 text-sm rounded-lg border transition focus:outline-none ${inputBorderClass}"
+            />
+          </td>
+          <td class="py-3 px-3 text-center">
+            <div class="flex items-center justify-center gap-2">
+              <button onclick="speakGerman(${item.id}, 'word')" class="w-8 h-8 rounded-full bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 flex items-center justify-center transition active:scale-95 shrink-0">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clip-rule="evenodd"></path></svg>
+              </button>
+              <div id="status-${item.id}" class="min-w-[68px]">${statusBadge}</div>
+            </div>
+          </td>
+          <td id="example-${item.id}" class="py-3 px-4 text-slate-700">
+            <div class="flex items-start gap-2">
+              <button onclick="speakGerman(${item.id}, 'example')" class="mt-0.5 w-6 h-6 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition shrink-0">
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+              </button>
+              <span id="example-text-${item.id}" class="leading-snug">${formattedExample}</span>
+            </div>
+          </td>
+          <td class="py-3 px-3">
+            <div id="srs-cell-${item.id}" class="flex flex-col items-start gap-1">
+              <span class="inline-block px-2 py-0.5 text-[11px] font-semibold rounded border ${srsInfo.badgeClass}">${srsInfo.badgeText}</span>
+              <span class="text-[11px] font-medium text-slate-500">${srsInfo.scheduleText}</span>
+            </div>
+          </td>
+          <td class="py-3 px-4 bg-slate-50/70 border-l border-slate-200">
+            <div onclick="toggleSinglePeek(${item.id})" class="${isPeekOpen ? 'anti-peek-revealed' : 'anti-peek-blur'} space-y-0.5">
+              <div class="text-xs font-mono text-teal-800 font-medium">${escapeHtml(item.ipa || "—")}</div>
+              <div class="text-xs text-slate-500">${escapeHtml(item.grammar || "")}</div>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      updateScoreboard();
+    }
+
+    function handleInputFocus(inputEl, id) {
+      lastFocusedInput = inputEl;
+      if (dictationMode && !(userAnswers[id] || "").trim()) {
+        speakGerman(id, "word");
+      }
+    }
+
+    function insertUmlaut(event, char) {
+      event.preventDefault();
+      if (!lastFocusedInput) return;
+      const start = lastFocusedInput.selectionStart || 0;
+      const end = lastFocusedInput.selectionEnd || 0;
+      const val = lastFocusedInput.value;
+      lastFocusedInput.value = val.slice(0, start) + char + val.slice(end);
+      lastFocusedInput.focus();
+      lastFocusedInput.setSelectionRange(start + char.length, start + char.length);
+      const idMatch = lastFocusedInput.id.match(/^input-(\d+)$/);
+      if (idMatch) handleInput(Number(idMatch[1]), lastFocusedInput.value);
+    }
+
+    function focusNextIncompleteRow(currentId) {
+      const inputs = Array.from(document.querySelectorAll('#vocab-tbody input[id^="input-"]'));
+      const currentIndex = inputs.findIndex(el => el.id === `input-${currentId}`);
+      if (currentIndex === -1) return;
+
+      for (let i = currentIndex + 1; i < inputs.length; i++) {
+        const nextId = Number(inputs[i].id.replace("input-", ""));
+        const nextItem = vocabList.find(v => v.id === nextId);
+        if (nextItem && checkAnswer(nextItem, userAnswers[nextId] || "") !== "CORRECT") {
+          inputs[i].focus();
+          inputs[i].scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+      }
+      for (let i = 0; i < currentIndex; i++) {
+        const nextId = Number(inputs[i].id.replace("input-", ""));
+        const nextItem = vocabList.find(v => v.id === nextId);
+        if (nextItem && checkAnswer(nextItem, userAnswers[nextId] || "") !== "CORRECT") {
+          inputs[i].focus();
+          inputs[i].scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+      }
+    }
+
+    function handleInput(id, value) {
+      const prevVal = userAnswers[id] || "";
+      const item = vocabList.find(v => v.id === id);
+      const prevStatus = item ? checkAnswer(item, prevVal) : "EMPTY";
+
+      userAnswers[id] = value;
+      saveAnswers();
+      if (!item) return;
+
+      const status = checkAnswer(item, value);
+      const inputEl = document.getElementById(`input-${id}`);
+      const statusEl = document.getElementById(`status-${id}`);
+
+      if (status === "CORRECT") {
+        if (prevStatus !== "CORRECT") {
+          recordAttempt(id, true);
+          speakGerman(id, "word");
+          const rowEl = document.getElementById(`row-${id}`);
+          if (rowEl) {
+            rowEl.classList.remove("row-flash-success");
+            void rowEl.offsetWidth;
+            rowEl.classList.add("row-flash-success");
+          }
+          if (autoAdvanceMode) setTimeout(() => focusNextIncompleteRow(id), 220);
+        }
+        inputEl.className = "w-full px-3 py-1.5 text-sm rounded-lg border transition focus:outline-none border-emerald-500 bg-emerald-50/60 text-emerald-900 font-semibold";
+        statusEl.innerHTML = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">Đúng ✓</span>`;
+      } else if (status === "EMPTY") {
+        inputEl.className = "w-full px-3 py-1.5 text-sm rounded-lg border transition focus:outline-none border-slate-300 bg-amber-50/40 focus:border-teal-500 focus:bg-white";
+        statusEl.innerHTML = `<span class="text-xs text-slate-400">Chờ điền</span>`;
+      } else {
+        inputEl.className = "w-full px-3 py-1.5 text-sm rounded-lg border transition focus:outline-none border-slate-300 bg-amber-50/40 focus:border-teal-500 focus:bg-white";
+        statusEl.innerHTML = `<span class="text-xs text-slate-400">Đang gõ...</span>`;
+      }
+
+      const exTextEl = document.getElementById(`example-text-${id}`);
+      if (exTextEl) exTextEl.innerHTML = formatExampleSentence(item, status === "CORRECT");
+
+      refreshSrsCell(id);
+      updateScoreboard();
+    }
+
+    function handleKeyDown(event, id) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        const item = vocabList.find(v => v.id === id);
+        if (!item) return;
+
+        const status = checkAnswer(item, userAnswers[id] || "");
+        const inputEl = document.getElementById(`input-${id}`);
+        const statusEl = document.getElementById(`status-${id}`);
+
+        if (status === "WRONG") {
+          recordAttempt(id, false);
+          refreshSrsCell(id);
+          inputEl.className = "w-full px-3 py-1.5 text-sm rounded-lg border transition focus:outline-none border-rose-400 bg-rose-50/60 text-rose-900";
+          statusEl.innerHTML = `
+            <div class="flex flex-col items-center gap-1">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300">Sai ✗</span>
+              <button onclick="revealHint(${item.id})" class="text-[11px] text-rose-600 hover:underline font-medium">Xem đáp án</button>
+            </div>
+          `;
+        }
+        focusNextIncompleteRow(id);
+      }
+    }
+
+    function refreshSrsCell(id) {
+      const cellEl = document.getElementById(`srs-cell-${id}`);
+      if (!cellEl) return;
+      const srsInfo = getSrsStatusInfo(id);
+      cellEl.innerHTML = `
+        <span class="inline-block px-2 py-0.5 text-[11px] font-semibold rounded border ${srsInfo.badgeClass}">${srsInfo.badgeText}</span>
+        <span class="text-[11px] font-medium text-slate-500">${srsInfo.scheduleText}</span>
+      `;
+    }
+
+    function revealHint(id) {
+      const item = vocabList.find(v => v.id === id);
+      if (!item) return;
+      recordAttempt(id, false);
+      refreshSrsCell(id);
+      const statusEl = document.getElementById(`status-${id}`);
+      statusEl.innerHTML = `<span class="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-1 rounded border border-rose-200 select-all">${escapeHtml(item.de)}</span>`;
+      speakGerman(id, "word");
+    }
+
+    function updateScoreboard() {
+      const lekFilter = document.getElementById("filter-lektion").value;
+      const posFilter = document.getElementById("filter-pos").value;
+      const baseList = vocabList.filter(item => {
+        if (lekFilter !== "ALL" && item.lektion !== lekFilter) return false;
+        if (posFilter !== "ALL" && item.pos !== posFilter) return false;
+        return true;
+      });
+
+      let correctCount = 0, wrongCount = 0, dueCount = 0;
+      baseList.forEach(item => {
+        const st = checkAnswer(item, userAnswers[item.id] || "");
+        if (st === "CORRECT") correctCount++;
+        if (st === "WRONG") wrongCount++;
+        if (getSrsStatusInfo(item.id).category === "DUE") dueCount++;
+      });
+
+      const total = baseList.length;
+      const percent = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+
+      document.getElementById("stat-total").textContent = total;
+      document.getElementById("stat-correct").textContent = correctCount;
+      document.getElementById("stat-wrong").textContent = wrongCount;
+      document.getElementById("stat-due").textContent = dueCount;
+      document.getElementById("stat-percent").textContent = `${percent}%`;
+    }
+
+    function speakGerman(id, mode) {
+      if (!("speechSynthesis" in window)) return;
+      const item = vocabList.find(v => v.id === id);
+      if (!item) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(mode === "word" ? item.de : item.ex);
+      utterance.lang = "de-DE";
+      utterance.rate = speechRate;
+      const germanVoice = window.speechSynthesis.getVoices().find(v => v.lang.startsWith("de"));
+      if (germanVoice) utterance.voice = germanVoice;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+    }
+
+    function toggleSpeechRate() {
+      speechRate = speechRate === 1.0 ? 0.75 : 1.0;
+      document.getElementById("btn-speech-rate").textContent = `🔊 ${speechRate.toFixed(speechRate === 1.0 ? 1 : 2)}x`;
+    }
+
+    function toggleAutoAdvance() {
+      autoAdvanceMode = !autoAdvanceMode;
+      const btn = document.getElementById("btn-toggle-autoadvance");
+      btn.textContent = autoAdvanceMode ? "⏬ Tự nhảy dòng: BẬT" : "⏬ Tự nhảy dòng: TẮT";
+      btn.className = autoAdvanceMode
+        ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-semibold px-2.5 py-1.5 rounded-lg text-xs transition flex items-center gap-1"
+        : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-medium px-2.5 py-1.5 rounded-lg text-xs transition flex items-center gap-1";
+    }
+
+    function toggleClozeMode() {
+      clozeMode = !clozeMode;
+      const btn = document.getElementById("btn-toggle-cloze");
+      btn.textContent = clozeMode ? "🙈 Che từ VD: BẬT" : "👁️ Che từ VD: TẮT";
+      btn.className = clozeMode
+        ? "bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-300 font-semibold px-2.5 py-1.5 rounded-lg text-xs transition flex items-center gap-1"
+        : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-medium px-2.5 py-1.5 rounded-lg text-xs transition flex items-center gap-1";
+      renderTable();
+    }
+
+    function toggleDictationMode() {
+      dictationMode = !dictationMode;
+      revealedMeanings = {};
+      const btn = document.getElementById("btn-toggle-dictation");
+      const banner = document.getElementById("mode-banner");
+      const badge = document.getElementById("header-dictation-badge");
+
+      if (dictationMode) {
+        btn.textContent = "🎧 Luyện nghe: BẬT";
+        btn.className = "bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-600 font-semibold px-2.5 py-1.5 rounded-lg text-xs transition flex items-center gap-1";
+        banner.classList.remove("hidden");
+        badge.classList.remove("hidden");
+      } else {
+        btn.textContent = "🎧 Luyện nghe: TẮT";
+        btn.className = "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-medium px-2.5 py-1.5 rounded-lg text-xs transition flex items-center gap-1";
+        banner.classList.add("hidden");
+        badge.classList.add("hidden");
+      }
+      renderTable();
+    }
+
+    function toggleUmlautBar() {
+      const bar = document.getElementById("umlaut-bar");
+      const btn = document.getElementById("btn-toggle-umlaut");
+      const isHidden = bar.classList.contains("hidden");
+      bar.classList.toggle("hidden", !isHidden);
+      btn.className = isHidden
+        ? "bg-slate-800 text-white border border-slate-800 font-semibold px-2.5 py-1.5 rounded-lg text-xs transition flex items-center gap-1"
+        : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-medium px-2.5 py-1.5 rounded-lg text-xs transition flex items-center gap-1";
+    }
+
+    function toggleSingleMeaning(id) {
+      if (!dictationMode) return;
+      revealedMeanings[id] = !revealedMeanings[id];
+      renderTable();
+    }
+
+    function toggleGlobalPeek() {
+      globalPeekRevealed = !globalPeekRevealed;
+      document.getElementById("btn-toggle-peek").textContent = globalPeekRevealed ? "🙈 Che IPA/NP" : "👁️ Hiện IPA/NP";
+      renderTable();
+    }
+
+    function toggleSinglePeek(id) {
+      revealedRows[id] = !revealedRows[id];
+      renderTable();
+    }
+
+    function shuffleWords() {
+      shuffleArray(vocabList);
+      saveVocab();
+      renderTable();
+    }
+
+    function openResetModal() {
+      const modal = document.getElementById("reset-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeResetModal() {
+      const modal = document.getElementById("reset-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function executeReset(clearSrsHistory) {
+      getFilteredVocab().forEach(item => {
+        delete userAnswers[item.id];
+        if (clearSrsHistory) delete srsData[item.id];
+      });
+      saveAnswers();
+      if (clearSrsHistory) saveSrs();
+      revealedRows = {};
+      revealedMeanings = {};
+      closeResetModal();
+      renderTable();
+    }
+
+    function resetFilters() {
+      document.getElementById("filter-lektion").value = "ALL";
+      document.getElementById("filter-pos").value = "ALL";
+      document.getElementById("filter-status").value = "ALL";
+      document.getElementById("search-input").value = "";
+      renderTable();
+    }
+
+    function openProgressModal() {
+      let due = 0, learning = 0, mastered = 0, fresh = 0;
+      const weakItems = [], masteredItems = [];
+
+      vocabList.forEach(item => {
+        const info = getSrsStatusInfo(item.id);
+        const rec = getWordSrs(item.id);
+        if (info.category === "DUE") due++;
+        else if (info.category === "LEARNING") learning++;
+        else if (info.category === "MASTERED") mastered++;
+        else fresh++;
+
+        if (rec.wrongCount > 0 || info.category === "DUE") weakItems.push({ item, rec, info });
+        if (info.category === "MASTERED") masteredItems.push({ item, rec, info });
+      });
+
+      document.getElementById("srs-count-due").textContent = due;
+      document.getElementById("srs-count-learning").textContent = learning;
+      document.getElementById("srs-count-mastered").textContent = mastered;
+      document.getElementById("srs-count-new").textContent = fresh;
+
+      weakItems.sort((a, b) => (b.rec.wrongCount - a.rec.wrongCount) || (a.rec.streak - b.rec.streak));
+
+      const weakListEl = document.getElementById("weak-words-list");
+      weakListEl.innerHTML = weakItems.length === 0
+        ? `<div class="p-4 text-center text-slate-400">Chưa có từ nào bị sai hoặc đến hạn ôn.</div>`
+        : weakItems.map(({ item, rec, info }) => `
+          <div class="py-2 px-2.5 flex items-center justify-between gap-2 hover:bg-rose-50/40 rounded">
+            <div>
+              <div class="font-semibold text-slate-800">${escapeHtml(item.vi)} <span class="text-slate-400 font-normal">(${escapeHtml(item.lektion)})</span></div>
+              <div class="text-[11px] text-rose-600">${info.scheduleText} • Sai ${rec.wrongCount} lần</div>
+            </div>
+            <button onclick="speakGerman(${item.id}, 'word')" class="text-teal-700 hover:bg-teal-50 p-1.5 rounded-full">🔊</button>
+          </div>
+        `).join("");
+
+      const masteredListEl = document.getElementById("mastered-words-list");
+      masteredListEl.innerHTML = masteredItems.length === 0
+        ? `<div class="p-4 text-center text-slate-400">Gõ đúng một từ 3 lần liên tiếp để đưa vào danh sách thuộc vững.</div>`
+        : masteredItems.map(({ item, rec, info }) => `
+          <div class="py-2 px-2.5 flex items-center justify-between gap-2 hover:bg-emerald-50/40 rounded">
+            <div>
+              <div class="font-semibold text-slate-800">${escapeHtml(item.de)} <span class="text-slate-500 font-normal">— ${escapeHtml(item.vi)}</span></div>
+              <div class="text-[11px] text-emerald-700">${info.scheduleText} • Đúng ${rec.streak}x</div>
+            </div>
+            <button onclick="speakGerman(${item.id}, 'word')" class="text-teal-700 hover:bg-teal-50 p-1.5 rounded-full">🔊</button>
+          </div>
+        `).join("");
+
+      const modal = document.getElementById("progress-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeProgressModal() {
+      const modal = document.getElementById("progress-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function practiceWeakWords() {
+      closeProgressModal();
+      document.getElementById("filter-status").value = "WEAK";
+      if (getFilteredVocab().length === 0) document.getElementById("filter-status").value = "DUE";
+      getFilteredVocab().forEach(item => { delete userAnswers[item.id]; });
+      saveAnswers();
+      renderTable();
+    }
+
+    function openAddModal() {
+      const modal = document.getElementById("add-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeAddModal() {
+      const modal = document.getElementById("add-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function switchModalTab(tab) {
+      const btnSingle = document.getElementById("tab-single");
+      const btnBulk = document.getElementById("tab-bulk");
+      const formSingle = document.getElementById("form-single");
+      const formBulk = document.getElementById("form-bulk");
+
+      if (tab === "single") {
+        btnSingle.className = "pb-2.5 border-b-2 border-teal-600 text-teal-700";
+        btnBulk.className = "pb-2.5 border-b-2 border-transparent text-slate-500 hover:text-slate-700";
+        formSingle.classList.remove("hidden");
+        formBulk.classList.add("hidden");
+      } else {
+        btnBulk.className = "pb-2.5 border-b-2 border-teal-600 text-teal-700";
+        btnSingle.className = "pb-2.5 border-b-2 border-transparent text-slate-500 hover:text-slate-700";
+        formBulk.classList.remove("hidden");
+        formSingle.classList.add("hidden");
+      }
+    }
+
+    function handleAddSingle(e) {
+      e.preventDefault();
+      const lektion = document.getElementById("in-lektion").value.trim() || "Bài mới";
+      const pos = document.getElementById("in-pos").value;
+      const vi = document.getElementById("in-vi").value.trim();
+      const de = document.getElementById("in-de").value.trim();
+      const ex = document.getElementById("in-ex").value.trim();
+      const ipa = document.getElementById("in-ipa").value.trim();
+      const grammar = document.getElementById("in-grammar").value.trim();
+      const maxId = vocabList.reduce((max, item) => Math.max(max, item.id), 0);
+      const clozeTarget = de.replace(/^(der|die|das|sich)\s+/i, "").trim();
+
+      vocabList.unshift({ id: maxId + 1, lektion, pos, vi, de, clozeTarget, ex, ipa, grammar });
+      saveVocab();
+      populateLektionDropdown();
+      document.getElementById("filter-lektion").value = lektion;
+      renderTable();
+
+      ["in-vi", "in-de", "in-ex", "in-ipa", "in-grammar"].forEach(id => document.getElementById(id).value = "");
+      closeAddModal();
+    }
+
+    function handleBulkImport() {
+      const raw = document.getElementById("bulk-textarea").value.trim();
+      if (!raw) return;
+
+      const lines = raw.split(/\r?\n/);
+      let maxId = vocabList.reduce((max, item) => Math.max(max, item.id), 0);
+      let addedCount = 0;
+      let lastLektion = "Lektion mới";
+
+      lines.forEach(line => {
+        if (!line.trim()) return;
+        const parts = line.includes("\t") ? line.split("\t") : line.split("|");
+        if (parts.length >= 4) {
+          maxId++;
+          const lektion = parts[0].trim() || "Lektion mới";
+          const posRaw = parts[1].trim();
+          const pos = ["N", "V", "Adj"].includes(posRaw) ? posRaw : "N";
+          const vi = parts[2].trim();
+          const de = parts[3].trim();
+          const ex = (parts[4] || "").trim();
+          const ipa = (parts[5] || "").trim();
+          const grammar = (parts[6] || "").trim();
+          const clozeTarget = de.replace(/^(der|die|das|sich)\s+/i, "").trim();
+
+          vocabList.unshift({ id: maxId, lektion, pos, vi, de, clozeTarget, ex, ipa, grammar });
+          lastLektion = lektion;
+          addedCount++;
+        }
+      });
+
+      if (addedCount > 0) {
+        saveVocab();
+        populateLektionDropdown();
+        document.getElementById("filter-lektion").value = lastLektion;
+        renderTable();
+        document.getElementById("bulk-textarea").value = "";
+        closeAddModal();
+        alert(`Đã nạp thành công ${addedCount} từ vựng vào ${lastLektion}!`);
+      } else {
+        alert("Không nhận diện được dòng hợp lệ. Vui lòng kiểm tra định dạng phân cách bởi dấu Tab hoặc dấu |.");
+      }
+    }
+
+    function openBackupModal() {
+      const modal = document.getElementById("backup-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeBackupModal() {
+      const modal = document.getElementById("backup-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function exportBackupJSON() {
+      const backupPayload = { version: 2, exportedAt: new Date().toISOString(), vocabList, userAnswers, srsData };
+      const blob = new Blob([JSON.stringify(backupPayload, null, 2)], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `DeutschAktiv_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function importBackupJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (Array.isArray(parsed.vocabList)) {
+            vocabList = parsed.vocabList;
+            userAnswers = parsed.userAnswers || {};
+            srsData = parsed.srsData || {};
+            saveVocab();
+            saveAnswers();
+            saveSrs();
+            populateLektionDropdown();
+            renderTable();
+            closeBackupModal();
+            alert(`Khôi phục thành công ${vocabList.length} từ vựng!`);
+          }
+        } catch (err) { alert("Lỗi khi đọc file sao lưu JSON."); }
+      };
+      reader.readAsText(file);
+    }
+
+    function exportToTSV() {
+      const rows = vocabList.map(item => {
+        const backInfo = `${item.de} ${item.ipa ? item.ipa : ""}<br><i>${item.ex}</i>${item.grammar ? "<br><small>" + item.grammar + "</small>" : ""}`;
+        return `${item.vi} [${item.pos}]\t${backInfo}\t${item.lektion.replace(/\s+/g, "_")}`;
+      });
+      const blob = new Blob([rows.join("\n")], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "DeutschAktiv_Anki_Flashcards.txt";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    window.addEventListener("DOMContentLoaded", initApp);
+  </script>
+</body>
+</html>
