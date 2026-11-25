@@ -149,7 +149,9 @@
             <option value="ALL">Tất cả</option>
             <option value="N">Danh từ [N]</option>
             <option value="V">Động từ [V]</option>
-            <option value="Adj">Tính/Trạng từ [Adj]</option>
+            <option value="Adj">Tính từ [Adj]</option>
+            <option value="Adv">Trạng từ [Adv]</option>
+            <option value="Sonst.">Cụm từ / Khác [Sonst.]</option>
           </select>
         </div>
 
@@ -366,7 +368,9 @@
             <select id="in-pos" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500">
               <option value="N">Danh từ [N]</option>
               <option value="V">Động từ [V]</option>
-              <option value="Adj">Tính / Trạng từ [Adj]</option>
+              <option value="Adj">Tính từ [Adj]</option>
+              <option value="Adv">Trạng từ [Adv]</option>
+              <option value="Sonst.">Cụm từ / Khác [Sonst.]</option>
             </select>
           </div>
         </div>
@@ -407,7 +411,7 @@
       <div id="form-bulk" class="hidden p-6 space-y-4 text-sm">
         <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs text-slate-600 space-y-1">
           <p class="font-semibold text-slate-800">Gửi ảnh trang từ vựng mới trong sách cho AI và dán kết quả vào đây.</p>
-          <p>Định dạng 7 cột phân cách bởi dấu <strong>Tab</strong> hoặc dấu <strong>|</strong>:</p>
+          <p>Hỗ trợ loại từ: <strong>N</strong>, <strong>V</strong>, <strong>Adj</strong>, <strong>Adv</strong>, <strong>Sonst.</strong> (7 cột phân cách bởi dấu <strong>Tab</strong> hoặc dấu <strong>|</strong>):</p>
           <code class="block bg-white p-1.5 rounded border border-slate-200 text-[11px] text-teal-800 overflow-x-auto">
             Lektion 15 | N | cái bàn | der Tisch | Der Tisch ist groß. | /deːɐ̯ tɪʃ/ | Pl: die Tische
           </code>
@@ -514,8 +518,8 @@
       { id: 36, lektion: "Lektion 14", pos: "V", vi: "mong chờ điều gì (trong tương lai)", de: "sich freuen auf", clozeTarget: "freuen uns schon auf", ex: "Wir freuen uns schon auf die Sommerferien.", ipa: "/zɪç ˈfʁɔɪ̯ən aʊ̯f/", grammar: "+ Akkusativ" },
       { id: 37, lektion: "Lektion 14", pos: "Adj", vi: "nghèo", de: "arm", clozeTarget: "arm", ex: "Die Familie ist zwar arm, aber sehr glücklich.", ipa: "/aʁm/", grammar: "So sánh: ärmer, am ärmsten" },
       { id: 38, lektion: "Lektion 14", pos: "Adj", vi: "thuộc về nước Rumani", de: "rumänisch", clozeTarget: "rumänische", ex: "Das ist eine traditionelle rumänische Spezialität.", ipa: "/ʁuˈmɛːnɪʃ/", grammar: "VD: rumänische Kinder" },
-      { id: 39, lektion: "Lektion 14", pos: "Adj", vi: "trước tiên, đầu tiên", de: "zuerst", clozeTarget: "Zuerst", ex: "Zuerst machen wir die Hausaufgaben, dann spielen wir.", ipa: "/tsuˈeːɐ̯st/", grammar: "Trạng từ chỉ thời gian" },
-      { id: 40, lektion: "Lektion 14", pos: "Adj", vi: "cuối cùng", de: "schließlich", clozeTarget: "schließlich", ex: "Nach einer langen Reise kamen wir schließlich in München an.", ipa: "/ˈʃliːslɪç/", grammar: "Đồng nghĩa: zuletzt" },
+      { id: 39, lektion: "Lektion 14", pos: "Adv", vi: "trước tiên, đầu tiên", de: "zuerst", clozeTarget: "Zuerst", ex: "Zuerst machen wir die Hausaufgaben, dann spielen wir.", ipa: "/tsuˈeːɐ̯st/", grammar: "Trạng từ chỉ thời gian" },
+      { id: 40, lektion: "Lektion 14", pos: "Adv", vi: "cuối cùng", de: "schließlich", clozeTarget: "schließlich", ex: "Nach einer langen Reise kamen wir schließlich in München an.", ipa: "/ˈʃliːslɪç/", grammar: "Đồng nghĩa: zuletzt" },
       { id: 41, lektion: "Lektion 14", pos: "N", vi: "kem bôi", de: "die Creme", clozeTarget: "Creme", ex: "Im Winter brauche ich eine gute Creme für meine Hände.", ipa: "/diː kʁeːm/", grammar: "Pl: die Cremes" },
       { id: 42, lektion: "Lektion 14", pos: "N", vi: "mặt", de: "das Gesicht", clozeTarget: "Gesicht", ex: "Sie wäscht sich morgens das Gesicht mit kaltem Wasser.", ipa: "/das ɡəˈzɪçt/", grammar: "Pl: die Gesichter" },
       { id: 43, lektion: "Lektion 14", pos: "N", vi: "cậu bé", de: "der Junge", clozeTarget: "Junge", ex: "Der kleine Junge spielt im Park Fußball.", ipa: "/deːɐ̯ ˈjʊŋə/", grammar: "Pl: die Jungen" },
@@ -752,6 +756,8 @@
         let posBadgeClass = "bg-sky-100 text-sky-800 border-sky-200";
         if (item.pos === "V") posBadgeClass = "bg-purple-100 text-purple-800 border-purple-200";
         if (item.pos === "Adj") posBadgeClass = "bg-amber-100 text-amber-800 border-amber-200";
+        if (item.pos === "Adv") posBadgeClass = "bg-rose-100 text-rose-800 border-rose-200";
+        if (item.pos === "Sonst.") posBadgeClass = "bg-teal-100 text-teal-800 border-teal-200";
 
         let inputBorderClass = "border-slate-300 bg-amber-50/40 focus:border-teal-500 focus:bg-white";
         let statusBadge = `<span class="text-xs text-slate-400">Chờ điền</span>`;
@@ -1259,7 +1265,7 @@
           maxId++;
           const lektion = parts[0].trim() || "Lektion mới";
           const posRaw = parts[1].trim();
-          const pos = ["N", "V", "Adj"].includes(posRaw) ? posRaw : "N";
+          const pos = ["N", "V", "Adj", "Adv", "Sonst."].includes(posRaw) ? posRaw : "Sonst.";
           const vi = parts[2].trim();
           const de = parts[3].trim();
           const ex = (parts[4] || "").trim();
